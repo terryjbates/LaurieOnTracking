@@ -9,6 +9,7 @@ Data can be found at: https://github.com/metrica-sports/sample-data
 
 @author: Laurie Shaw (@EightyFivePoint)
 """
+from __future__ import annotations
 
 import pandas as pd
 import csv as csv
@@ -36,13 +37,13 @@ def read_event_data(DATADIR,game_id):
 def tracking_data(DATADIR,game_id,teamname):
     '''
     tracking_data(DATADIR,game_id,teamname):
-    read Metrica tracking data for game_id and return as a DataFrame. 
+    read Metrica tracking data for game_id and return as a DataFrame.
     teamname is the name of the team in the filename. For the sample data this is either 'Home' or 'Away'.
     '''
     teamfile = '/Sample_Game_%d/Sample_Game_%d_RawTrackingData_%s_Team.csv' % (game_id,game_id,teamname)
     # First:  deal with file headers so that we can get the player names correct
     csvfile =  open('{}/{}'.format(DATADIR, teamfile), 'r') # create a csv file reader
-    reader = csv.reader(csvfile) 
+    reader = csv.reader(csvfile)
     teamnamefull = next(reader)[3].lower()
     print("Reading team: %s" % teamnamefull)
     # construct column names
@@ -62,7 +63,7 @@ def merge_tracking_data(home,away):
     merge home & away tracking data files into single data frame
     '''
     return home.drop(columns=['ball_x', 'ball_y']).merge( away, left_index=True, right_index=True )
-    
+
 def to_metric_coordinates(data,field_dimen=(106.,68.) ):
     '''
     Convert positions from Metrica units to meters (with origin at centre circle)
@@ -71,38 +72,86 @@ def to_metric_coordinates(data,field_dimen=(106.,68.) ):
     y_columns = [c for c in data.columns if c[-1].lower()=='y']
     data[x_columns] = ( data[x_columns]-0.5 ) * field_dimen[0]
     data[y_columns] = -1 * ( data[y_columns]-0.5 ) * field_dimen[1]
-    ''' 
+    '''
     ------------ ***NOTE*** ------------
-    Metrica actually define the origin at the *top*-left of the field, not the bottom-left, as discussed in the YouTube video. 
+    Metrica actually define the origin at the *top*-left of the field, not the bottom-left, as discussed in the YouTube video.
     I've changed the line above to reflect this. It was originally:
     data[y_columns] = ( data[y_columns]-0.5 ) * field_dimen[1]
     ------------ ********** ------------
     '''
     return data
 
-def to_single_playing_direction(home,away,events):
-    '''
-    Flip coordinates in second half so that each team always shoots in the same direction through the match.
-    '''
-    for team in [home,away,events]:
-        second_half_idx = team.Period.idxmax(2)
-        columns = [c for c in team.columns if c[-1].lower() in ['x','y']]
-        team.loc[second_half_idx:,columns] *= -1
-    return home,away,events
+# =============================================================================
+# def to_single_playing_direction(home,away,events):
+#     '''
+#     Flip coordinates in second half so that each team always shoots in the same direction through the match.
+#     '''
+#     for team in [home,away,events]:
+#         second_half_idx = team.Period.idxmax(2)
+#         # second_half_idx = team[team.Period == 2].index
+#         columns = [c for c in team.columns if c[-1].lower() in ['x','y']]
+#         team.loc[second_half_idx:,columns] *= -1
+#     return home,away,events
+# =============================================================================
+
+def to_single_playing_direction(
+    home: pd.DataFrame,
+    away: pd.DataFrame,
+    events: pd.DataFrame,
+    *,
+    period_col: str = "Period",
+    second_half_value: int = 2,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Flip coordinates in the second half so each team attacks in the same direction all match.
+    Mutates input dataframes (like the original). Call .copy() first if you want immutability.
+    """
+
+    def flip_df(df: pd.DataFrame) -> None:
+        if period_col not in df.columns:
+            raise KeyError(f"'{period_col}' column not found")
+
+        # Find the first row index where Period == 2
+        mask = df[period_col] == second_half_value
+        if not mask.any():
+            return  # no 2nd half present
+
+        start_idx = df.index[mask][0]
+
+        # Pick coordinate columns: endswith _x/_y or 'x'/'y' (covers Home_1_x, Start X, etc.)
+        cols = [
+            c for c in df.columns
+            if c.lower().endswith(("_x", "_y")) or c.lower().endswith((" x", " y"))
+        ]
+
+        # If your columns are literally 'x' and 'y' somewhere, include them too:
+        cols += [c for c in ("x", "y") if c in df.columns]
+
+        # De-dup while keeping order
+        seen = set()
+        cols = [c for c in cols if not (c in seen or seen.add(c))]
+
+        if cols:
+            df.loc[start_idx:, cols] = df.loc[start_idx:, cols] * -1
+
+    for df in (home, away, events):
+        flip_df(df)
+
+    return home, away, events
+
 
 def find_playing_direction(team,teamname):
     '''
     Find the direction of play for the team (based on where the goalkeepers are at kickoff). +1 is left->right and -1 is right->left
-    '''    
+    '''
     GK_column_x = teamname+"_"+find_goalkeeper(team)+"_x"
     # +ve is left->right, -ve is right->left
     return -np.sign(team.iloc[0][GK_column_x])
-    
+
 def find_goalkeeper(team):
     '''
     Find the goalkeeper in team, identifying him/her as the player closest to goal at kick off
-    ''' 
+    '''
     x_columns = [c for c in team.columns if c[-2:].lower()=='_x' and c[:4] in ['Home','Away']]
     GK_col = team.iloc[0][x_columns].abs().idxmax(axis=1)
     return GK_col.split('_')[1]
-    
