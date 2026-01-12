@@ -14,16 +14,6 @@ GitHub repo: https://github.com/Friends-of-Tracking-Data-FoTD/LaurieOnTracking
 @author: Laurie Shaw (@EightyFivePoint)
 """
 
-import sys, os
-
-# set up initial path to data
-DATADIR = '/PATH/TO/WHERE/YOU/SAVED/THE/SAMPLE/DATA'
-DATADIR = r'C:\Users\lover\github\sample-data\data'
-
-sys.path.append(DATADIR)
-from importlib import reload  # Python 3.4+
-
-
 import Metrica_IO as mio
 import Metrica_Viz as mviz
 import Metrica_Velocities as mvel
@@ -72,21 +62,16 @@ print(goals)
 mviz.plot_events( events.loc[820:823], color='k', indicators = ['Marker','Arrow'], annotate=True )
 
 # first get pitch control model parameters
-# The arg in the video is 3. Why?
 params = mpc.default_model_params()
-
 # find goalkeepers for offside calculation
 GK_numbers = [mio.find_goalkeeper(tracking_home),mio.find_goalkeeper(tracking_away)]
 
 # evaluated pitch control surface for first pass
 PPCF,xgrid,ygrid = mpc.generate_pitch_control_for_event(820, events, tracking_home, tracking_away, params, GK_numbers, field_dimen = (106.,68.,), n_grid_cells_x = 50)
 mviz.plot_pitchcontrol_for_event( 820, events,  tracking_home, tracking_away, PPCF, annotate=True )
-
 # evaluated pitch control surface for second pass
 PPCF,xgrid,ygrid = mpc.generate_pitch_control_for_event(821, events, tracking_home, tracking_away, params, GK_numbers, field_dimen = (106.,68.,), n_grid_cells_x = 50)
 mviz.plot_pitchcontrol_for_event( 821, events,  tracking_home, tracking_away, PPCF, annotate=True )
-
-
 # evaluated pitch control surface for third pass
 PPCF,xgrid,ygrid = mpc.generate_pitch_control_for_event(822, events, tracking_home, tracking_away, params, GK_numbers, field_dimen = (106.,68.,), n_grid_cells_x = 50)
 mviz.plot_pitchcontrol_for_event( 822, events,  tracking_home, tracking_away, PPCF, annotate=True )
@@ -102,18 +87,18 @@ for i,row in home_passes.iterrows():
     pass_start_pos = np.array([row['Start X'],row['Start Y']])
     pass_target_pos = np.array([row['End X'],row['End Y']])
     pass_frame = row['Start Frame']
-
+    
     attacking_players = mpc.initialise_players(tracking_home.loc[pass_frame],'Home',params, GK_numbers[0])
     defending_players = mpc.initialise_players(tracking_away.loc[pass_frame],'Away',params, GK_numbers[1])
     Patt,Pdef = mpc.calculate_pitch_control_at_target(pass_target_pos, attacking_players, defending_players, pass_start_pos, params)
 
     pass_success_probability.append( (i,Patt) )
-
+    
 import matplotlib.pyplot as plt
 fig,ax = plt.subplots()
-ax.hist( [p[1] for p in pass_success_probability], np.arange(0,1.1,0.1))
+ax.hist( [p[1] for p in pass_success_probability], np.arange(0,1.1,0.1))    
 ax.set_xlabel('Pass success probability')
-ax.set_ylabel('Frequency')
+ax.set_ylabel('Frequency')  
 
 # sort the passes by pitch control probability
 pass_success_probability = sorted( pass_success_probability, key = lambda x: x[1] )
@@ -129,3 +114,6 @@ print("Event following a risky (completed) pass")
 for p in pass_success_probability[:20]:
     outcome = events.loc[ p[0]+1 ].Type
     print( p[1], outcome )
+
+
+

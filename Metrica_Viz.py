@@ -7,7 +7,7 @@ Module for visualising Metrica tracking and event data
 
 Data can be found at: https://github.com/metrica-sports/sample-data
 
-UPDATE for tutorial 4: plot_pitchcontrol_for_event no longer requires 'xgrid' and 'ygrid' as inputs. 
+UPDATE for tutorial 4: plot_pitchcontrol_for_event no longer requires 'xgrid' and 'ygrid' as inputs.
 
 @author: Laurie Shaw (@EightyFivePoint)
 """
@@ -20,22 +20,22 @@ import Metrica_IO as mio
 
 def plot_pitch( field_dimen = (106.0,68.0), field_color ='green', linewidth=2, markersize=20):
     """ plot_pitch
-    
+
     Plots a soccer pitch. All distance units converted to meters.
-    
+
     Parameters
     -----------
         field_dimen: (length, width) of field in meters. Default is (106,68)
         field_color: color of field. options are {'green','white'}
         linewidth  : width of lines. default = 2
         markersize : size of markers (e.g. penalty spot, centre spot, posts). default = 20
-        
+
     Returrns
     -----------
        fig,ax : figure and aixs objects (so that other data can be plotted onto the pitch)
 
     """
-    fig,ax = plt.subplots(figsize=(12,8)) # create a figure 
+    fig,ax = plt.subplots(figsize=(12,8)) # create a figure
     # decide what color we want the field to be. Default is green, but can also choose white
     if field_color=='green':
         ax.set_facecolor('mediumseagreen')
@@ -49,7 +49,7 @@ def plot_pitch( field_dimen = (106.0,68.0), field_color ='green', linewidth=2, m
     meters_per_yard = 0.9144 # unit conversion from yards to meters
     half_pitch_length = field_dimen[0]/2. # length of half pitch
     half_pitch_width = field_dimen[1]/2. # width of half pitch
-    signs = [-1,1] 
+    signs = [-1,1]
     # Soccer field dimensions typically defined in yards, so we need to convert to meters
     goal_line_width = 8*meters_per_yard
     box_width = 20*meters_per_yard
@@ -94,7 +94,7 @@ def plot_pitch( field_dimen = (106.0,68.0), field_color ='green', linewidth=2, m
         y = np.linspace(-1,1,50)*D_length # D_length is the chord of the circle that defines the D
         x = np.sqrt(D_radius**2-y**2)+D_pos
         ax.plot(s*half_pitch_length-s*x,y,lc,linewidth=linewidth)
-        
+
     # remove axis labels and ticks
     ax.set_xticklabels([])
     ax.set_yticklabels([])
@@ -108,29 +108,29 @@ def plot_pitch( field_dimen = (106.0,68.0), field_color ='green', linewidth=2, m
     ax.set_axisbelow(True)
     return fig,ax
 
-def plot_frame( hometeam, awayteam, figax=None, team_colors=('r','b'), field_dimen = (106.0,68.0), include_player_velocities=False, PlayerMarkerSize=10, PlayerAlpha=0.7, annotate=False ):
+def plot_frame( hometeam, awayteam, figax=None, team_colors=('r','b'), field_dimen = (106.0,68.0), include_player_velocities=False, Playermarkersize=10, PlayerAlpha=0.7, annotate=False ):
     """ plot_frame( hometeam, awayteam )
-    
+
     Plots a frame of Metrica tracking data (player positions and the ball) on a football pitch. All distances should be in meters.
-    
+
     Parameters
     -----------
         hometeam: row (i.e. instant) of the home team tracking data frame
         awayteam: row of the away team tracking data frame
-        fig,ax: Can be used to pass in the (fig,ax) objects of a previously generated pitch. Set to (fig,ax) to use an existing figure, or None (the default) to generate a new pitch plot, 
+        fig,ax: Can be used to pass in the (fig,ax) objects of a previously generated pitch. Set to (fig,ax) to use an existing figure, or None (the default) to generate a new pitch plot,
         team_colors: Tuple containing the team colors of the home & away team. Default is 'r' (red, home team) and 'b' (blue away team)
         field_dimen: tuple containing the length and width of the pitch in meters. Default is (106,68)
         include_player_velocities: Boolean variable that determines whether player velocities are also plotted (as quivers). Default is False
-        PlayerMarkerSize: size of the individual player marlers. Default is 10
+        Playermarkersize: size of the individual player marlers. Default is 10
         PlayerAlpha: alpha (transparency) of player markers. Defaault is 0.7
         annotate: Boolean variable that determines with player jersey numbers are added to the plot (default is False)
-        
+
     Returrns
     -----------
        fig,ax : figure and aixs objects (so that other data can be plotted onto the pitch)
 
     """
-    if figax is None: # create new pitch 
+    if figax is None: # create new pitch
         fig,ax = plot_pitch( field_dimen = field_dimen )
     else: # overlay on a previously generated pitch
         fig,ax = figax # unpack tuple
@@ -138,22 +138,22 @@ def plot_frame( hometeam, awayteam, figax=None, team_colors=('r','b'), field_dim
     for team,color in zip( [hometeam,awayteam], team_colors) :
         x_columns = [c for c in team.keys() if c[-2:].lower()=='_x' and c!='ball_x'] # column header for player x positions
         y_columns = [c for c in team.keys() if c[-2:].lower()=='_y' and c!='ball_y'] # column header for player y positions
-        ax.plot( team[x_columns], team[y_columns], color+'o', MarkerSize=PlayerMarkerSize, alpha=PlayerAlpha ) # plot player positions
+        ax.plot( team[x_columns], team[y_columns], color+'o', markersize=Playermarkersize, alpha=PlayerAlpha ) # plot player positions
         if include_player_velocities:
             vx_columns = ['{}_vx'.format(c[:-2]) for c in x_columns] # column header for player x positions
             vy_columns = ['{}_vy'.format(c[:-2]) for c in y_columns] # column header for player y positions
             ax.quiver( team[x_columns], team[y_columns], team[vx_columns], team[vy_columns], color=color, scale_units='inches', scale=10.,width=0.0015,headlength=5,headwidth=3,alpha=PlayerAlpha)
         if annotate:
-            [ ax.text( team[x]+0.5, team[y]+0.5, x.split('_')[1], fontsize=10, color=color  ) for x,y in zip(x_columns,y_columns) if not ( np.isnan(team[x]) or np.isnan(team[y]) ) ] 
+            [ ax.text( team[x]+0.5, team[y]+0.5, x.split('_')[1], fontsize=10, color=color  ) for x,y in zip(x_columns,y_columns) if not ( np.isnan(team[x]) or np.isnan(team[y]) ) ]
     # plot ball
-    ax.plot( hometeam['ball_x'], hometeam['ball_y'], 'ko', MarkerSize=6, alpha=1.0, LineWidth=0)
+    ax.plot( hometeam['ball_x'], hometeam['ball_y'], 'ko', markersize=6, alpha=1.0, linewidth=0)
     return fig,ax
-    
-def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, frames_per_second=25, team_colors=('r','b'), field_dimen = (106.0,68.0), include_player_velocities=False, PlayerMarkerSize=10, PlayerAlpha=0.7):
+
+def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, frames_per_second=25, team_colors=('r','b'), field_dimen = (106.0,68.0), include_player_velocities=False, Playermarkersize=10, PlayerAlpha=0.7):
     """ save_match_clip( hometeam, awayteam, fpath )
-    
+
     Generates a movie from Metrica tracking data, saving it in the 'fpath' directory with name 'fname'
-    
+
     Parameters
     -----------
         hometeam: home team tracking data DataFrame. Movie will be created from all rows in the DataFrame
@@ -165,9 +165,9 @@ def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, fra
         team_colors: Tuple containing the team colors of the home & away team. Default is 'r' (red, home team) and 'b' (blue away team)
         field_dimen: tuple containing the length and width of the pitch in meters. Default is (106,68)
         include_player_velocities: Boolean variable that determines whether player velocities are also plotted (as quivers). Default is False
-        PlayerMarkerSize: size of the individual player marlers. Default is 10
+        Playermarkersize: size of the individual player marlers. Default is 10
         PlayerAlpha: alpha (transparency) of player markers. Defaault is 0.7
-        
+
     Returrns
     -----------
        fig,ax : figure and aixs objects (so that other data can be plotted onto the pitch)
@@ -196,7 +196,7 @@ def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, fra
             for team,color in zip( [hometeam.loc[i],awayteam.loc[i]], team_colors) :
                 x_columns = [c for c in team.keys() if c[-2:].lower()=='_x' and c!='ball_x'] # column header for player x positions
                 y_columns = [c for c in team.keys() if c[-2:].lower()=='_y' and c!='ball_y'] # column header for player y positions
-                objs, = ax.plot( team[x_columns], team[y_columns], color+'o', MarkerSize=PlayerMarkerSize, alpha=PlayerAlpha ) # plot player positions
+                objs, = ax.plot( team[x_columns], team[y_columns], color+'o', markersize=Playermarkersize, alpha=PlayerAlpha ) # plot player positions
                 figobjs.append(objs)
                 if include_player_velocities:
                     vx_columns = ['{}_vx'.format(c[:-2]) for c in x_columns] # column header for player x positions
@@ -204,7 +204,7 @@ def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, fra
                     objs = ax.quiver( team[x_columns], team[y_columns], team[vx_columns], team[vy_columns], color=color, scale_units='inches', scale=10.,width=0.0015,headlength=5,headwidth=3,alpha=PlayerAlpha)
                     figobjs.append(objs)
             # plot ball
-            objs, = ax.plot( team['ball_x'], team['ball_y'], 'ko', MarkerSize=6, alpha=1.0, LineWidth=0)
+            objs, = ax.plot( team['ball_x'], team['ball_y'], 'ko', markersize=6, alpha=1.0, linewidth=0)
             figobjs.append(objs)
             # include match time at the top
             frame_minute =  int( team['Time [s]']/60. )
@@ -218,35 +218,35 @@ def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, fra
                 figobj.remove()
     print("done")
     plt.clf()
-    plt.close(fig)    
+    plt.close(fig)
 
 
 def plot_events( events, figax=None, field_dimen = (106.0,68), indicators = ['Marker','Arrow'], color='r', marker_style = 'o', alpha = 0.5, annotate=False):
     """ plot_events( events )
-    
+
     Plots Metrica event positions on a football pitch. event data can be a single or several rows of a data frame. All distances should be in meters.
-    
+
     Parameters
     -----------
         events: row (i.e. instant) of the home team tracking data frame
-        fig,ax: Can be used to pass in the (fig,ax) objects of a previously generated pitch. Set to (fig,ax) to use an existing figure, or None (the default) to generate a new pitch plot, 
+        fig,ax: Can be used to pass in the (fig,ax) objects of a previously generated pitch. Set to (fig,ax) to use an existing figure, or None (the default) to generate a new pitch plot,
         field_dimen: tuple containing the length and width of the pitch in meters. Default is (106,68)
         indicators: List containing choices on how to plot the event. 'Marker' places a marker at the 'Start X/Y' location of the event; 'Arrow' draws an arrow from the start to end locations. Can choose one or both.
         color: color of indicator. Default is 'r' (red)
         marker_style: Marker type used to indicate the event position. Default is 'o' (filled ircle).
-        alpha: alpha of event marker. Default is 0.5    
+        alpha: alpha of event marker. Default is 0.5
         annotate: Boolean determining whether text annotation from event data 'Type' and 'From' fields is shown on plot. Default is False.
-        
+
     Returrns
     -----------
        fig,ax : figure and aixs objects (so that other data can be plotted onto the pitch)
 
     """
 
-    if figax is None: # create new pitch 
+    if figax is None: # create new pitch
         fig,ax = plot_pitch( field_dimen = field_dimen )
     else: # overlay on a previously generated pitch
-        fig,ax = figax 
+        fig,ax = figax
     for i,row in events.iterrows():
         if 'Marker' in indicators:
             ax.plot(  row['Start X'], row['Start Y'], color+marker_style, alpha=alpha )
@@ -259,9 +259,9 @@ def plot_events( events, figax=None, field_dimen = (106.0,68), indicators = ['Ma
 
 def plot_pitchcontrol_for_event( event_id, events,  tracking_home, tracking_away, PPCF, alpha = 0.7, include_player_velocities=True, annotate=False, field_dimen = (106.0,68)):
     """ plot_pitchcontrol_for_event( event_id, events,  tracking_home, tracking_away, PPCF )
-    
+
     Plots the pitch control surface at the instant of the event given by the event_id. Player and ball positions are overlaid.
-    
+
     Parameters
     -----------
         event_id: Index (not row) of the event that describes the instant at which the pitch control surface should be calculated
@@ -273,24 +273,24 @@ def plot_pitchcontrol_for_event( event_id, events,  tracking_home, tracking_away
         include_player_velocities: Boolean variable that determines whether player velocities are also plotted (as quivers). Default is False
         annotate: Boolean variable that determines with player jersey numbers are added to the plot (default is False)
         field_dimen: tuple containing the length and width of the pitch in meters. Default is (106,68)
-        
+
     NB: this function no longer requires xgrid and ygrid as an input
-        
+
     Returrns
     -----------
        fig,ax : figure and aixs objects (so that other data can be plotted onto the pitch)
 
-    """    
+    """
 
     # pick a pass at which to generate the pitch control surface
     pass_frame = events.loc[event_id]['Start Frame']
     pass_team = events.loc[event_id].Team
-    
+
     # plot frame and event
     fig,ax = plot_pitch(field_color='white', field_dimen = field_dimen)
     plot_frame( tracking_home.loc[pass_frame], tracking_away.loc[pass_frame], figax=(fig,ax), PlayerAlpha=alpha, include_player_velocities=include_player_velocities, annotate=annotate )
     plot_events( events.loc[event_id:event_id], figax = (fig,ax), indicators = ['Marker','Arrow'], annotate=False, color= 'k', alpha=1 )
-    
+
     # plot pitch control surface
     if pass_team=='Home':
         cmap = 'bwr'
@@ -303,9 +303,9 @@ def plot_pitchcontrol_for_event( event_id, events,  tracking_home, tracking_away
 
 def plot_EPV_for_event( event_id, events, tracking_home, tracking_away, PPCF, EPV, alpha = 0.7, include_player_velocities=True, annotate=False, autoscale=0.1, contours=False, field_dimen = (106.0,68)):
     """ plot_EPV_for_event( event_id, events,  tracking_home, tracking_away, PPCF, EPV, alpha, include_player_velocities, annotate, autoscale, contours, field_dimen)
-    
+
     Plots the EPVxPitchControl surface at the instant of the event given by the event_id. Player and ball positions are overlaid.
-    
+
     Parameters
     -----------
         event_id: Index (not row) of the event that describes the instant at which the pitch control surface should be calculated
@@ -313,29 +313,29 @@ def plot_EPV_for_event( event_id, events, tracking_home, tracking_away, PPCF, EP
         tracking_home: (entire) tracking DataFrame for the Home team
         tracking_away: (entire) tracking DataFrame for the Away team
         PPCF: Pitch control surface (dimen (n_grid_cells_x,n_grid_cells_y) ) containing pitch control probability for the attcking team (as returned by the generate_pitch_control_for_event in Metrica_PitchControl)
-        EPV: Expected Possession Value surface. EPV is the probability that a possession will end with a goal given the current location of the ball. 
+        EPV: Expected Possession Value surface. EPV is the probability that a possession will end with a goal given the current location of the ball.
              The EPV surface is saved in the FoT github repo and can be loaded using Metrica_EPV.load_EPV_grid()
         alpha: alpha (transparency) of player markers. Default is 0.7
         include_player_velocities: Boolean variable that determines whether player velocities are also plotted (as quivers). Default is False
         annotate: Boolean variable that determines with player jersey numbers are added to the plot (default is False)
         autoscale: If True, use the max of surface to define the colorscale of the image. If set to a value [0-1], uses this as the maximum of the color scale.
         field_dimen: tuple containing the length and width of the pitch in meters. Default is (106,68)
-        
+
     Returrns
     -----------
        fig,ax : figure and aixs objects (so that other data can be plotted onto the pitch)
 
-    """    
+    """
 
     # pick a pass at which to generate the pitch control surface
     pass_frame = events.loc[event_id]['Start Frame']
     pass_team = events.loc[event_id].Team
-    
+
     # plot frame and event
     fig,ax = plot_pitch(field_color='white', field_dimen = field_dimen)
     plot_frame( tracking_home.loc[pass_frame], tracking_away.loc[pass_frame], figax=(fig,ax), PlayerAlpha=alpha, include_player_velocities=include_player_velocities, annotate=annotate )
     plot_events( events.loc[event_id:event_id], figax = (fig,ax), indicators = ['Marker','Arrow'], annotate=False, color= 'k', alpha=1 )
-       
+
     # plot pitch control surface
     if pass_team=='Home':
         cmap = 'Reds'
@@ -345,40 +345,40 @@ def plot_EPV_for_event( event_id, events, tracking_home, tracking_away, PPCF, EP
         cmap = 'Blues'
         lcolor = 'b'
         EPV = np.fliplr(EPV) if mio.find_playing_direction(tracking_away,'Away') == -1 else EPV
-    
+
     EPVxPPCF = PPCF*EPV
-    
+
     if autoscale is True:
         vmax = np.max(EPVxPPCF)*2.
     elif autoscale>=0 and autoscale<=1:
         vmax = autoscale
     else:
         assert False, "'autoscale' must be either {True or between 0 and 1}"
-        
+
     ax.imshow(np.flipud(EPVxPPCF), extent=(-field_dimen[0]/2., field_dimen[0]/2., -field_dimen[1]/2., field_dimen[1]/2.),interpolation='spline36',vmin=0.0,vmax=vmax,cmap=cmap,alpha=0.7)
-    
+
     if contours:
         ax.contour( EPVxPPCF,extent=(-field_dimen[0]/2., field_dimen[0]/2., -field_dimen[1]/2., field_dimen[1]/2.),levels=np.array([0.75])*np.max(EPVxPPCF),colors=lcolor,alpha=1.0)
-    
+
     return fig,ax
 
 def plot_EPV(EPV,field_dimen=(106.0,68),attack_direction=1):
     """ plot_EPV( EPV,  field_dimen, attack_direction)
-    
-    Plots the pre-generated Expected Possession Value surface 
-    
+
+    Plots the pre-generated Expected Possession Value surface
+
     Parameters
     -----------
-        EPV: The 32x50 grid containing the EPV surface. EPV is the probability that a possession will end with a goal given the current location of the ball. 
+        EPV: The 32x50 grid containing the EPV surface. EPV is the probability that a possession will end with a goal given the current location of the ball.
              The EPV surface is saved in the FoT github repo and can be loaded using Metrica_EPV.load_EPV_grid()
         field_dimen: tuple containing the length and width of the pitch in meters. Default is (106,68)
         attack_direction: Sets the attack direction (1: left->right, -1: right->left)
-            
+
     Returrns
     -----------
        fig,ax : figure and aixs objects (so that other data can be plotted onto the pitch)
 
-    """    
+    """
     if attack_direction==-1:
         # flip direction of grid if team is attacking right->left
         EPV = np.fliplr(EPV)
@@ -387,15 +387,3 @@ def plot_EPV(EPV,field_dimen=(106.0,68),attack_direction=1):
     fig,ax = plot_pitch(field_color='white', field_dimen = field_dimen)
     # overlap the EPV surface
     ax.imshow(EPV, extent=(-field_dimen[0]/2., field_dimen[0]/2., -field_dimen[1]/2., field_dimen[1]/2.),vmin=0.0,vmax=0.6,cmap='Blues',alpha=0.6)
-    
-
-
-
-
-
-
-
-
-
-
-
