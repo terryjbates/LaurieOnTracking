@@ -161,13 +161,47 @@ def check_offsides(
     defending_gk_id = GK_numbers[1] if attacking_players[0].teamname == "Home" else GK_numbers[0]
 
     # Pull the defending GK object (fast single pass)
-    defending_gk: Optional[player] = None
-    for p in defending_players:
-        if p.id_int == defending_gk_id:
-            defending_gk = p
-            break
+    # --- Robustly identify defending GK (ID match, then fallback heuristic) ---
+
+    # Determine which GK number we should be looking for based on defending team.
+    # GK_numbers is expected like: [home_gk_num, away_gk_num]
+    try:
+        home_gk_num = str(GK_numbers[0])
+        away_gk_num = str(GK_numbers[1])
+    except Exception:
+        home_gk_num = None
+        away_gk_num = None
+
+    defending_team = getattr(defending_players[0], "team", None) if defending_players else None
+    target_gk_num = home_gk_num if defending_team == "Home" else away_gk_num
+
+    defending_gk = None
+
+    # 1) Try to match by jersey/id (string-normalized)
+    if target_gk_num is not None:
+        for p in defending_players:
+            if str(getattr(p, "id", "")) == target_gk_num:
+                defending_gk = p
+                break
+
+    # 2) Fallback: pick the defending player closest to their own goal (max abs(x))
+    # This handles cases where GK is missing in tracking at this frame (NaNs → dropped).
+    if defending_gk is None and len(defending_players) > 0:
+        finite = [p for p in defending_players if np.isfinite(p.position[0]) and np.isfinite(p.position[1])]
+        if len(finite) > 0:
+            defending_gk = max(finite, key=lambda p: abs(float(p.position[0])))
+
+            if verbose:
+                print(
+                    f"[check_offsides] GK id {target_gk_num} not found for {defending_team}; "
+                    f"falling back to heuristic GK={getattr(defending_gk, 'id', '?')}"
+                )
+
     if defending_gk is None:
-        raise ValueError("Defending goalkeeper jersey number not found in defending players")
+        # At this point, we truly cannot determine defending GK; skip offside removal rather than crash.
+        if verbose:
+            print("[check_offsides] Could not identify defending GK; skipping offside check for this frame.")
+        return attacking_players
 
     defending_half = float(np.sign(defending_gk.position[0]))  # -1: left goal, +1: right goal
     if defending_half == 0.0:
