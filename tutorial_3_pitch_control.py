@@ -77,11 +77,18 @@ def safe_calc_player_velocities(tracking: pd.DataFrame) -> pd.DataFrame:
     try:
         return mvel.calc_player_velocities(tracking, smoothing=True)
     except TypeError:
-        return mvel.calc_player_velocities(tracking, smoothing=True, filter_="moving_average")
+        return mvel.calc_player_velocities(
+            tracking, smoothing=True, filter_="moving_average"
+        )
 
 
-def safe_plot_pitchcontrol_for_event(event_id: int, PPCF: np.ndarray, events: pd.DataFrame,
-                                     tracking_home: pd.DataFrame, tracking_away: pd.DataFrame) -> None:
+def safe_plot_pitchcontrol_for_event(
+    event_id: int,
+    PPCF: np.ndarray,
+    events: pd.DataFrame,
+    tracking_home: pd.DataFrame,
+    tracking_away: pd.DataFrame,
+) -> None:
     """
     Your refactored Metrica_Viz.plot_pitchcontrol_for_event does NOT require xgrid/ygrid.
     This wrapper just makes the intent explicit.
@@ -116,7 +123,9 @@ tracking_away = mio.to_metric_coordinates(tracking_away, field_dimen=FIELD_DIMEN
 events = mio.to_metric_coordinates(events, field_dimen=FIELD_DIMEN)
 
 # Single playing direction (mutates; rebind for clarity)
-tracking_home, tracking_away, events = mio.to_single_playing_direction(tracking_home, tracking_away, events)
+tracking_home, tracking_away, events = mio.to_single_playing_direction(
+    tracking_home, tracking_away, events
+)
 
 # Velocities (needed by pitch control model)
 tracking_home = safe_calc_player_velocities(tracking_home)
@@ -134,7 +143,9 @@ print("\n--- Goals (from SHOT Subtype contains '-GOAL') ---")
 print(goals)
 
 print("\n--- Plot events leading up to goal 2 (820:823) ---")
-mviz.plot_events(events.loc[820:823], color="k", indicators=["Marker", "Arrow"], annotate=True)
+mviz.plot_events(
+    events.loc[820:823], color="k", indicators=["Marker", "Arrow"], annotate=True
+)
 
 # Pitch control model params
 params = mpc.default_model_params()
@@ -162,7 +173,9 @@ for eid in LEADUP_EVENT_IDS:
 # ----------------------------
 
 # Home passes (original tutorial says “successful pass”, but uses all PASS rows in events)
-home_passes = events[(events["Type"].isin(["PASS"])) & (events["Team"] == "Home")].copy()
+home_passes = events[
+    (events["Type"].isin(["PASS"])) & (events["Team"] == "Home")
+].copy()
 
 # Need finite start/end coords + start frame
 needed = ["Start X", "Start Y", "End X", "End Y", "Start Frame"]
@@ -171,7 +184,9 @@ if missing:
     raise KeyError(f"Events missing columns needed for pass probability: {missing}")
 
 # Some passes can have NaNs for end coords; those cannot be evaluated.
-home_passes = home_passes.dropna(subset=["Start X", "Start Y", "End X", "End Y", "Start Frame"]).copy()
+home_passes = home_passes.dropna(
+    subset=["Start X", "Start Y", "End X", "End Y", "Start Frame"]
+).copy()
 
 pass_success_probability: List[Tuple[int, float]] = []
 
@@ -181,8 +196,12 @@ for i, row in home_passes.iterrows():
     pass_frame = int(row["Start Frame"])
 
     # Initialise players at the pass frame
-    attacking_players = mpc.initialise_players(tracking_home.loc[pass_frame], "Home", params, GK_numbers[0])
-    defending_players = mpc.initialise_players(tracking_away.loc[pass_frame], "Away", params, GK_numbers[1])
+    attacking_players = mpc.initialise_players(
+        tracking_home.loc[pass_frame], "Home", params, GK_numbers[0]
+    )
+    defending_players = mpc.initialise_players(
+        tracking_away.loc[pass_frame], "Away", params, GK_numbers[1]
+    )
 
     Patt, Pdef = mpc.calculate_pitch_control_at_target(
         pass_target_pos,
@@ -215,7 +234,9 @@ print(f"\nNumber of Home passes evaluated: {len(pass_success_probability)}")
 print(f"Number of risky completed Home passes (Patt < 0.5): {len(risky_passes)}")
 
 if len(risky_passes) > 0:
-    mviz.plot_events(risky_passes, color="k", indicators=["Marker", "Arrow"], annotate=True)
+    mviz.plot_events(
+        risky_passes, color="k", indicators=["Marker", "Arrow"], annotate=True
+    )
 else:
     print("No risky passes found under the Patt < 0.5 threshold in this match slice.")
 

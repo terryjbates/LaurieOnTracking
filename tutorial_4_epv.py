@@ -94,7 +94,9 @@ tracking_away = mio.to_metric_coordinates(tracking_away)
 events = mio.to_metric_coordinates(events)
 
 # Single playing direction (home always attacks right->left, per tutorial convention)
-tracking_home, tracking_away, events = mio.to_single_playing_direction(tracking_home, tracking_away, events)
+tracking_home, tracking_away, events = mio.to_single_playing_direction(
+    tracking_home, tracking_away, events
+)
 
 # Velocities (required for pitch control model)
 tracking_home = mvel.calc_player_velocities(tracking_home, smoothing=True)
@@ -130,7 +132,9 @@ mviz.plot_EPV(EPV, field_dimen=(106.0, 68.0), attack_direction=home_attack_direc
 # Example: event sequence leading to away goal 1 (820–823)
 # ----------------------------
 
-mviz.plot_events(events.loc[820:823], color="k", indicators=["Marker", "Arrow"], annotate=True)
+mviz.plot_events(
+    events.loc[820:823], color="k", indicators=["Marker", "Arrow"], annotate=True
+)
 
 # Compute EPV added for the assist-like pass
 event_number = EVENT_AWAY_GOAL1_ASSIST
@@ -180,12 +184,16 @@ away_passes = events[(events["Type"] == "PASS") & (events["Team"] == "Away")]
 
 home_pass_value_added = []
 for i, _pass in home_passes.iterrows():
-    EEPV_added, EPV_diff = mepv.calculate_epv_added(i, events, tracking_home, tracking_away, GK_numbers, EPV, params)
+    EEPV_added, EPV_diff = mepv.calculate_epv_added(
+        i, events, tracking_home, tracking_away, GK_numbers, EPV, params
+    )
     home_pass_value_added.append((i, EEPV_added, EPV_diff))
 
 away_pass_value_added = []
 for i, _pass in away_passes.iterrows():
-    EEPV_added, EPV_diff = mepv.calculate_epv_added(i, events, tracking_home, tracking_away, GK_numbers, EPV, params)
+    EEPV_added, EPV_diff = mepv.calculate_epv_added(
+        i, events, tracking_home, tracking_away, GK_numbers, EPV, params
+    )
     away_pass_value_added.append((i, EEPV_added, EPV_diff))
 
 home_pass_value_added = sorted(home_pass_value_added, key=lambda x: x[1], reverse=True)
@@ -202,7 +210,10 @@ print(away_pass_value_added[:5])
 # Specific examples (as in original tutorial)
 # ----------------------------
 
-def plot_event_epv_and_pitchcontrol(event_number: int, *, autoscale: bool = False, contours: bool = False) -> None:
+
+def plot_event_epv_and_pitchcontrol(
+    event_number: int, *, autoscale: bool = False, contours: bool = False
+) -> None:
     """Compute EPV-added + pitch control for an event and plot surfaces."""
     EEPV_added, EPV_diff = mepv.calculate_epv_added(
         event_number, events, tracking_home, tracking_away, GK_numbers, EPV, params
