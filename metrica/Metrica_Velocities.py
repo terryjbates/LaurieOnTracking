@@ -93,12 +93,18 @@ def calc_player_velocities(
         mask_1h = period == 1
         mask_2h = period == 2
 
-        vx = _smooth_by_half(vx, mask_1h, mask_2h, filter_=filter_, window=window, polyorder=polyorder)
-        vy = _smooth_by_half(vy, mask_1h, mask_2h, filter_=filter_, window=window, polyorder=polyorder)
+        vx = _smooth_by_half(
+            vx, mask_1h, mask_2h, filter_=filter_, window=window, polyorder=polyorder
+        )
+        vy = _smooth_by_half(
+            vy, mask_1h, mask_2h, filter_=filter_, window=window, polyorder=polyorder
+        )
 
     # Compute speed after smoothing/outlier removal
     speed = np.sqrt(vx.to_numpy() ** 2 + vy.to_numpy() ** 2)
-    speed_df = pd.DataFrame(speed, index=team.index, columns=[f"{p}_speed" for p in prefixes])
+    speed_df = pd.DataFrame(
+        speed, index=team.index, columns=[f"{p}_speed" for p in prefixes]
+    )
 
     # Write outputs back to team (aligned by index)
     team = team.copy()
@@ -125,6 +131,7 @@ def remove_player_velocities(team: pd.DataFrame) -> pd.DataFrame:
 # -------------------------
 # Internals
 # -------------------------
+
 
 @lru_cache(maxsize=32)
 def _infer_player_prefixes(columns: tuple[str, ...]) -> tuple[str, ...]:
@@ -156,8 +163,12 @@ def _smooth_by_half(
     v_out = v.copy()
 
     if filter_ == "Savitzky-Golay":
-        v_out.loc[mask_1h] = _savgol_df(v_out.loc[mask_1h], window=window, polyorder=polyorder)
-        v_out.loc[mask_2h] = _savgol_df(v_out.loc[mask_2h], window=window, polyorder=polyorder)
+        v_out.loc[mask_1h] = _savgol_df(
+            v_out.loc[mask_1h], window=window, polyorder=polyorder
+        )
+        v_out.loc[mask_2h] = _savgol_df(
+            v_out.loc[mask_2h], window=window, polyorder=polyorder
+        )
         return v_out
 
     if filter_ == "moving average":
@@ -209,9 +220,8 @@ def _savgol_df(df: pd.DataFrame, *, window: int, polyorder: int) -> pd.DataFrame
     nan_mask = ~np.isfinite(df.to_numpy(dtype=float))
 
     # Vectorized interpolation per column (pandas is fast here)
-    filled = (
-        df.astype(float)
-        .interpolate(method="linear", limit_direction="both", axis=0)
+    filled = df.astype(float).interpolate(
+        method="linear", limit_direction="both", axis=0
     )
 
     x = filled.to_numpy(dtype=float)
@@ -238,9 +248,8 @@ def _moving_average_df(df: pd.DataFrame, *, window: int) -> pd.DataFrame:
 
     # Fill NaNs temporarily
     nan_mask = ~np.isfinite(df.to_numpy(dtype=float))
-    filled = (
-        df.astype(float)
-        .interpolate(method="linear", limit_direction="both", axis=0)
+    filled = df.astype(float).interpolate(
+        method="linear", limit_direction="both", axis=0
     )
     x = filled.to_numpy(dtype=float)
 

@@ -36,7 +36,17 @@ The 'player' class collects and stores trajectory information for each player re
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Tuple
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 import numpy as np
 import pandas as pd
@@ -56,6 +66,7 @@ Params = Mapping[str, float]
 # Optional caching (opt-in)
 # -----------------------------
 
+
 @dataclass
 class PitchControlCache:
     """In-process cache to speed up repeated pitch-control calls in the same match/session.
@@ -69,12 +80,16 @@ class PitchControlCache:
     - This is *in-memory* only (resets on kernel restart).
     - Safe as long as you reuse the same tracking DataFrames and params.
     """
-    players_by_frame: Dict[Tuple[int, str, int], List["player"]] = field(default_factory=dict)
+
+    players_by_frame: Dict[Tuple[int, str, int], List["player"]] = field(
+        default_factory=dict
+    )
 
 
 # -----------------------------
 # Core helpers (fast column parsing)
 # -----------------------------
+
 
 def _player_ids_from_row(team_row: pd.Series, teamname: str) -> np.ndarray:
     """Extract player jersey IDs from tracking row column names like 'Home_12_x'."""
@@ -94,6 +109,7 @@ def _player_ids_from_row(team_row: pd.Series, teamname: str) -> np.ndarray:
 # -----------------------------
 # Public API (same names; optional cache args added with defaults)
 # -----------------------------
+
 
 def initialise_players(
     team: pd.Series,
@@ -158,7 +174,9 @@ def check_offsides(
         return attacking_players
 
     # Which GK is defending (to infer attack direction)?
-    defending_gk_id = GK_numbers[1] if attacking_players[0].teamname == "Home" else GK_numbers[0]
+    defending_gk_id = (
+        GK_numbers[1] if attacking_players[0].teamname == "Home" else GK_numbers[0]
+    )
 
     # Pull the defending GK object (fast single pass)
     # --- Robustly identify defending GK (ID match, then fallback heuristic) ---
@@ -172,7 +190,9 @@ def check_offsides(
         home_gk_num = None
         away_gk_num = None
 
-    defending_team = getattr(defending_players[0], "team", None) if defending_players else None
+    defending_team = (
+        getattr(defending_players[0], "team", None) if defending_players else None
+    )
     target_gk_num = home_gk_num if defending_team == "Home" else away_gk_num
 
     defending_gk = None
@@ -187,7 +207,11 @@ def check_offsides(
     # 2) Fallback: pick the defending player closest to their own goal (max abs(x))
     # This handles cases where GK is missing in tracking at this frame (NaNs → dropped).
     if defending_gk is None and len(defending_players) > 0:
-        finite = [p for p in defending_players if np.isfinite(p.position[0]) and np.isfinite(p.position[1])]
+        finite = [
+            p
+            for p in defending_players
+            if np.isfinite(p.position[0]) and np.isfinite(p.position[1])
+        ]
         if len(finite) > 0:
             defending_gk = max(finite, key=lambda p: abs(float(p.position[0])))
 
@@ -200,17 +224,23 @@ def check_offsides(
     if defending_gk is None:
         # At this point, we truly cannot determine defending GK; skip offside removal rather than crash.
         if verbose:
-            print("[check_offsides] Could not identify defending GK; skipping offside check for this frame.")
+            print(
+                "[check_offsides] Could not identify defending GK; skipping offside check for this frame."
+            )
         return attacking_players
 
-    defending_half = float(np.sign(defending_gk.position[0]))  # -1: left goal, +1: right goal
+    defending_half = float(
+        np.sign(defending_gk.position[0])
+    )  # -1: left goal, +1: right goal
     if defending_half == 0.0:
         # Rare edge case: GK at x==0. Default to "right goal" to avoid division by zero-ish logic.
         defending_half = 1.0
 
     # Second deepest defender (including GK). Multiply by defending_half so we can just "max".
     # Sort descending so [0] deepest, [1] second deepest.
-    depths = sorted((defending_half * float(p.position[0]) for p in defending_players), reverse=True)
+    depths = sorted(
+        (defending_half * float(p.position[0]) for p in defending_players), reverse=True
+    )
     if len(depths) < 2:
         # If tracking is weird and only one defender is present, fall back to that one.
         second_deepest = depths[0]
@@ -225,7 +255,11 @@ def check_offsides(
             if float(p.position[0]) * defending_half > offside_line:
                 print(f"player {p.id} in {p.playername} is offside")
 
-    return [p for p in attacking_players if float(p.position[0]) * defending_half <= offside_line]
+    return [
+        p
+        for p in attacking_players
+        if float(p.position[0]) * defending_half <= offside_line
+    ]
 
 
 class player:
@@ -252,10 +286,12 @@ class player:
         "time_to_intercept",
     )
 
-    def __init__(self, pid: str, team: pd.Series, teamname: str, params: Params, GKid: int):
+    def __init__(
+        self, pid: str, team: pd.Series, teamname: str, params: Params, GKid: int
+    ):
         self.id = pid
         self.id_int = int(pid) if pid.isdigit() else -1
-        self.is_gk = (self.id_int == int(GKid))
+        self.is_gk = self.id_int == int(GKid)
         self.teamname = teamname
         self.playername = f"{teamname}_{pid}_"
 
@@ -264,7 +300,9 @@ class player:
         self.tti_sigma = float(params["tti_sigma"])
 
         self.lambda_att = float(params["lambda_att"])
-        self.lambda_def = float(params["lambda_gk"] if self.is_gk else params["lambda_def"])
+        self.lambda_def = float(
+            params["lambda_gk"] if self.is_gk else params["lambda_def"]
+        )
 
         self.position = np.array([np.nan, np.nan], dtype=float)
         self.velocity = np.array([0.0, 0.0], dtype=float)
@@ -285,15 +323,25 @@ class player:
     def _set_velocity(self, team: pd.Series) -> None:
         vx = team.get(self.playername + "vx", 0.0)
         vy = team.get(self.playername + "vy", 0.0)
-        vx = 0.0 if (vx is None or (isinstance(vx, float) and np.isnan(vx))) else float(vx)
-        vy = 0.0 if (vy is None or (isinstance(vy, float) and np.isnan(vy))) else float(vy)
+        vx = (
+            0.0
+            if (vx is None or (isinstance(vx, float) and np.isnan(vx)))
+            else float(vx)
+        )
+        vy = (
+            0.0
+            if (vy is None or (isinstance(vy, float) and np.isnan(vy)))
+            else float(vy)
+        )
         self.velocity = np.array([vx, vy], dtype=float)
 
     def simple_time_to_intercept(self, r_final: Array2) -> float:
         """Spearman-style simple time to intercept (reaction + full-speed run)."""
         self.PPCF = 0.0
         r_reaction = self.position + self.velocity * self.reaction_time
-        self.time_to_intercept = self.reaction_time + (np.linalg.norm(r_final - r_reaction) / self.vmax)
+        self.time_to_intercept = self.reaction_time + (
+            np.linalg.norm(r_final - r_reaction) / self.vmax
+        )
         return float(self.time_to_intercept)
 
     def probability_intercept_ball(self, T: float) -> float:
@@ -306,6 +354,7 @@ class player:
 # -----------------------------
 # Model parameters
 # -----------------------------
+
 
 def default_model_params(time_to_control_veto: float = 3.0) -> Dict[str, float]:
     """Return default parameters for Spearman (2018)-style pitch control model."""
@@ -325,14 +374,19 @@ def default_model_params(time_to_control_veto: float = 3.0) -> Dict[str, float]:
 
     # Shortcut thresholds
     common = np.log(10.0) * (np.sqrt(3.0) * params["tti_sigma"] / np.pi)
-    params["time_to_control_att"] = time_to_control_veto * (common + 1.0 / params["lambda_att"])
-    params["time_to_control_def"] = time_to_control_veto * (common + 1.0 / params["lambda_def"])
+    params["time_to_control_att"] = time_to_control_veto * (
+        common + 1.0 / params["lambda_att"]
+    )
+    params["time_to_control_def"] = time_to_control_veto * (
+        common + 1.0 / params["lambda_def"]
+    )
     return params
 
 
 # -----------------------------
 # Pitch control computations
 # -----------------------------
+
 
 def generate_pitch_control_for_event(
     event_id: int,
@@ -358,24 +412,42 @@ def generate_pitch_control_for_event(
     dx = field_dimen[0] / float(n_grid_cells_x)
     dy = field_dimen[1] / float(n_grid_cells_y)
 
-    xgrid = (np.arange(n_grid_cells_x, dtype=float) * dx) - (field_dimen[0] / 2.0) + (dx / 2.0)
-    ygrid = (np.arange(n_grid_cells_y, dtype=float) * dy) - (field_dimen[1] / 2.0) + (dy / 2.0)
+    xgrid = (
+        (np.arange(n_grid_cells_x, dtype=float) * dx)
+        - (field_dimen[0] / 2.0)
+        + (dx / 2.0)
+    )
+    ygrid = (
+        (np.arange(n_grid_cells_y, dtype=float) * dy)
+        - (field_dimen[1] / 2.0)
+        + (dy / 2.0)
+    )
 
     PPCFa = np.zeros((n_grid_cells_y, n_grid_cells_x), dtype=float)
     PPCFd = np.zeros((n_grid_cells_y, n_grid_cells_x), dtype=float)
 
     # Initialise players once at this frame (this is where caching helps the most)
     if pass_team == "Home":
-        attacking_players = initialise_players(tracking_home.loc[pass_frame], "Home", params, GK_numbers[0], cache=cache)
-        defending_players = initialise_players(tracking_away.loc[pass_frame], "Away", params, GK_numbers[1], cache=cache)
+        attacking_players = initialise_players(
+            tracking_home.loc[pass_frame], "Home", params, GK_numbers[0], cache=cache
+        )
+        defending_players = initialise_players(
+            tracking_away.loc[pass_frame], "Away", params, GK_numbers[1], cache=cache
+        )
     elif pass_team == "Away":
-        defending_players = initialise_players(tracking_home.loc[pass_frame], "Home", params, GK_numbers[0], cache=cache)
-        attacking_players = initialise_players(tracking_away.loc[pass_frame], "Away", params, GK_numbers[1], cache=cache)
+        defending_players = initialise_players(
+            tracking_home.loc[pass_frame], "Home", params, GK_numbers[0], cache=cache
+        )
+        attacking_players = initialise_players(
+            tracking_away.loc[pass_frame], "Away", params, GK_numbers[1], cache=cache
+        )
     else:
         raise ValueError("Team in possession must be either 'Home' or 'Away'")
 
     if offsides:
-        attacking_players = check_offsides(attacking_players, defending_players, ball_start_pos, GK_numbers)
+        attacking_players = check_offsides(
+            attacking_players, defending_players, ball_start_pos, GK_numbers
+        )
 
     # Evaluate surface (still the dominant cost; keep it tight)
     # We avoid allocating target_position in the hot loop by reusing an array.
@@ -384,7 +456,9 @@ def generate_pitch_control_for_event(
         target[1] = y
         for j, x in enumerate(xgrid):
             target[0] = x
-            a, d = calculate_pitch_control_at_target(target, attacking_players, defending_players, ball_start_pos, params)
+            a, d = calculate_pitch_control_at_target(
+                target, attacking_players, defending_players, ball_start_pos, params
+            )
             PPCFa[i, j] = a
             PPCFd[i, j] = d
 
@@ -407,7 +481,10 @@ def calculate_pitch_control_at_target(
     if ball_start_pos is None or np.isnan(ball_start_pos).any():
         ball_travel_time = 0.0
     else:
-        ball_travel_time = float(np.linalg.norm(target_position - ball_start_pos) / params["average_ball_speed"])
+        ball_travel_time = float(
+            np.linalg.norm(target_position - ball_start_pos)
+            / params["average_ball_speed"]
+        )
 
     # Compute time-to-intercept for all players and find minima
     tau_min_att = np.inf
@@ -434,15 +511,21 @@ def calculate_pitch_control_at_target(
     # Filter players too far behind the best arrival time (reduces work)
     ttc_att = float(params["time_to_control_att"])
     ttc_def = float(params["time_to_control_def"])
-    att = [p for p in attacking_players if (p.time_to_intercept - tau_min_att) < ttc_att]
-    deff = [p for p in defending_players if (p.time_to_intercept - tau_min_def) < ttc_def]
+    att = [
+        p for p in attacking_players if (p.time_to_intercept - tau_min_att) < ttc_att
+    ]
+    deff = [
+        p for p in defending_players if (p.time_to_intercept - tau_min_def) < ttc_def
+    ]
 
     int_dt = float(params["int_dt"])
     max_int_time = float(params["max_int_time"])
     tol = float(params["model_converge_tol"])
 
     # Integration times (start slightly before ball arrives)
-    dT = np.arange(ball_travel_time - int_dt, ball_travel_time + max_int_time, int_dt, dtype=float)
+    dT = np.arange(
+        ball_travel_time - int_dt, ball_travel_time + max_int_time, int_dt, dtype=float
+    )
 
     # Running totals (scalar is enough; arrays were unnecessary overhead in the original)
     p_att = 0.0
@@ -466,7 +549,9 @@ def calculate_pitch_control_at_target(
         for pl in att:
             dP = one_minus * pl.probability_intercept_ball(T) * pl.lambda_att
             if dP < 0.0:
-                raise AssertionError("Invalid attacking player probability (calculate_pitch_control_at_target)")
+                raise AssertionError(
+                    "Invalid attacking player probability (calculate_pitch_control_at_target)"
+                )
             pl.PPCF += dP * int_dt
             sum_att += pl.PPCF
 
@@ -475,7 +560,9 @@ def calculate_pitch_control_at_target(
         for pl in deff:
             dP = one_minus * pl.probability_intercept_ball(T) * pl.lambda_def
             if dP < 0.0:
-                raise AssertionError("Invalid defending player probability (calculate_pitch_control_at_target)")
+                raise AssertionError(
+                    "Invalid defending player probability (calculate_pitch_control_at_target)"
+                )
             pl.PPCF += dP * int_dt
             sum_def += pl.PPCF
 

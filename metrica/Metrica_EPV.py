@@ -6,13 +6,13 @@ Created on Tue May 26 16:41:01 2020
 Module for exploring expected possession value (EPV) surfaces using MetricaSports's tracking & event data.
 
 EPV is the probability that a possession will end with a goal given the current location of the ball. Multiplying by a
-pitch control surface gives the expected value of moving the ball to any location, accounting for the probability that the 
+pitch control surface gives the expected value of moving the ball to any location, accounting for the probability that the
 ball move (pass/carry) is successful.
 
 The EPV surface is saved in the FoT github repo and can be loaded using load_EPV_grid()
 
-A detailed description of EPV can be found in the accompanying video tutorial here: 
-    
+A detailed description of EPV can be found in the accompanying video tutorial here:
+
 GitHub repo for this code can be found here:
 https://github.com/Friends-of-Tracking-Data-FoTD/LaurieOnTracking
 
@@ -21,10 +21,10 @@ Data can be found at: https://github.com/metrica-sports/sample-data
 Main Functions
 ----------
 
-load_EPV_grid(): load pregenerated EPV surface from file. 
+load_EPV_grid(): load pregenerated EPV surface from file.
 calculate_epv_added(): Calculates the expected possession value added by a pass
 find_max_value_added_target(): Finds the *maximum* expected possession value that could have been achieved for a pass (defined by the event_id) by searching the entire field for the best target.
-    
+
 
 @author: Laurie Shaw (@EightyFivePoint)
 
@@ -47,6 +47,7 @@ FieldDimen = Tuple[float, float]
 # -----------------------------
 # Public API (unchanged)
 # -----------------------------
+
 
 def load_EPV_grid(fname: str = "EPV_grid.csv") -> np.ndarray:
     """Load pregenerated EPV surface from file."""
@@ -90,6 +91,7 @@ def get_EPV_at_location(
 # Caching layer (new, opt-in)
 # -----------------------------
 
+
 @dataclass
 class EPVCache:
     """In-process cache to speed up repeated EPV queries within a single match/session.
@@ -101,6 +103,7 @@ class EPVCache:
 
     It does NOT persist across Python restarts (for persistence, cache outputs to disk yourself).
     """
+
     home_attack_direction: Optional[int] = None
 
     # Pre-flipped EPV grids (avoid repeated np.fliplr)
@@ -109,7 +112,9 @@ class EPVCache:
 
     # Player initialisations are expensive. Cache them per (frame, pass_team).
     # Value: (attacking_players, defending_players, attack_direction)
-    players_by_frame: Dict[Tuple[int, str], Tuple[Any, Any, int]] = field(default_factory=dict)
+    players_by_frame: Dict[Tuple[int, str], Tuple[Any, Any, int]] = field(
+        default_factory=dict
+    )
 
     def prime_epv(self, EPV: np.ndarray) -> None:
         """Precompute both EPV orientations once."""
@@ -146,13 +151,23 @@ def calculate_epv_added(
     EPV_difference:
         Raw EPV change (ignoring pitch control)
     """
-    ctx = _build_pass_context(event_id, events, tracking_home, tracking_away, GK_numbers, params, cache)
+    ctx = _build_pass_context(
+        event_id, events, tracking_home, tracking_away, GK_numbers, params, cache
+    )
 
     Patt_start, _ = mpc.calculate_pitch_control_at_target(
-        ctx.pass_start_pos, ctx.attacking_players, ctx.defending_players, ctx.pass_start_pos, params
+        ctx.pass_start_pos,
+        ctx.attacking_players,
+        ctx.defending_players,
+        ctx.pass_start_pos,
+        params,
     )
     Patt_target, _ = mpc.calculate_pitch_control_at_target(
-        ctx.pass_target_pos, ctx.attacking_players, ctx.defending_players, ctx.pass_start_pos, params
+        ctx.pass_target_pos,
+        ctx.attacking_players,
+        ctx.defending_players,
+        ctx.pass_start_pos,
+        params,
     )
 
     # Use pre-flipped EPV if cache is primed; otherwise fall back to flipping inside get_EPV_at_location.
@@ -161,8 +176,12 @@ def calculate_epv_added(
         EPV_start = _get_EPV_at_location_with_grid(ctx.pass_start_pos, epv_grid)
         EPV_target = _get_EPV_at_location_with_grid(ctx.pass_target_pos, epv_grid)
     else:
-        EPV_start = get_EPV_at_location(ctx.pass_start_pos, EPV, attack_direction=ctx.attack_direction)
-        EPV_target = get_EPV_at_location(ctx.pass_target_pos, EPV, attack_direction=ctx.attack_direction)
+        EPV_start = get_EPV_at_location(
+            ctx.pass_start_pos, EPV, attack_direction=ctx.attack_direction
+        )
+        EPV_target = get_EPV_at_location(
+            ctx.pass_target_pos, EPV, attack_direction=ctx.attack_direction
+        )
 
     EEPV_start = Patt_start * EPV_start
     EEPV_target = Patt_target * EPV_target
@@ -186,17 +205,25 @@ def find_max_value_added_target(
     cache: EPVCache | None
         If provided, expensive intermediate computations are reused across calls.
     """
-    ctx = _build_pass_context(event_id, events, tracking_home, tracking_away, GK_numbers, params, cache)
+    ctx = _build_pass_context(
+        event_id, events, tracking_home, tracking_away, GK_numbers, params, cache
+    )
 
     Patt_start, _ = mpc.calculate_pitch_control_at_target(
-        ctx.pass_start_pos, ctx.attacking_players, ctx.defending_players, ctx.pass_start_pos, params
+        ctx.pass_start_pos,
+        ctx.attacking_players,
+        ctx.defending_players,
+        ctx.pass_start_pos,
+        params,
     )
 
     if cache is not None and cache.epv_lr is not None and cache.epv_rl is not None:
         epv_grid = cache.epv_for_direction(ctx.attack_direction)
         EPV_start = _get_EPV_at_location_with_grid(ctx.pass_start_pos, epv_grid)
     else:
-        EPV_start = get_EPV_at_location(ctx.pass_start_pos, EPV, attack_direction=ctx.attack_direction)
+        EPV_start = get_EPV_at_location(
+            ctx.pass_start_pos, EPV, attack_direction=ctx.attack_direction
+        )
 
     EEPV_start = Patt_start * EPV_start
 
@@ -232,6 +259,7 @@ def find_max_value_added_target(
 # -----------------------------
 # Internals
 # -----------------------------
+
 
 @dataclass(frozen=True)
 class _PassContext:

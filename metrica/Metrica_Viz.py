@@ -125,7 +125,9 @@ def _player_xy_columns(row: "Series") -> Tuple[List[str], List[str]]:
     return x_cols, y_cols
 
 
-def _velocity_columns_from_xy(x_cols: Sequence[str], y_cols: Sequence[str]) -> Tuple[List[str], List[str]]:
+def _velocity_columns_from_xy(
+    x_cols: Sequence[str], y_cols: Sequence[str]
+) -> Tuple[List[str], List[str]]:
     vx_cols = [f"{c[:-2]}_vx" for c in x_cols]
     vy_cols = [f"{c[:-2]}_vy" for c in y_cols]
     return vx_cols, vy_cols
@@ -134,7 +136,9 @@ def _velocity_columns_from_xy(x_cols: Sequence[str], y_cols: Sequence[str]) -> T
 def _ensure_events_df(events: Union["DataFrame", "Series"]) -> "DataFrame":
     """Accept a single event row (Series) or event DataFrame, return DataFrame."""
     if pd is None:
-        raise RuntimeError("pandas is required for plot_events (events is a DataFrame/Series).")
+        raise RuntimeError(
+            "pandas is required for plot_events (events is a DataFrame/Series)."
+        )
     if isinstance(events, pd.Series):
         return events.to_frame().T
     return events
@@ -144,8 +148,13 @@ def _ensure_events_df(events: Union["DataFrame", "Series"]) -> "DataFrame":
 # Public API (preserved)
 # ----------------------------
 
-def plot_pitch(field_dimen: FieldDimen = (106.0, 68.0), field_color: str = "green", linewidth: float = 2,
-               markersize: float = 20) -> FigAx:
+
+def plot_pitch(
+    field_dimen: FieldDimen = (106.0, 68.0),
+    field_color: str = "green",
+    linewidth: float = 2,
+    markersize: float = 20,
+) -> FigAx:
     """plot_pitch
 
     Plots a soccer pitch. All distance units converted to meters.
@@ -207,27 +216,68 @@ def plot_pitch(field_dimen: FieldDimen = (106.0, 68.0), field_color: str = "gree
         )
 
         # 6-yard box
-        ax.plot([s * half_L, s * half_L - s * g["box_length"]], [g["box_width"] / 2.0, g["box_width"] / 2.0], lc,
-                linewidth=linewidth)
-        ax.plot([s * half_L, s * half_L - s * g["box_length"]], [-g["box_width"] / 2.0, -g["box_width"] / 2.0], lc,
-                linewidth=linewidth)
-        ax.plot([s * half_L - s * g["box_length"], s * half_L - s * g["box_length"]],
-                [-g["box_width"] / 2.0, g["box_width"] / 2.0], lc, linewidth=linewidth)
+        ax.plot(
+            [s * half_L, s * half_L - s * g["box_length"]],
+            [g["box_width"] / 2.0, g["box_width"] / 2.0],
+            lc,
+            linewidth=linewidth,
+        )
+        ax.plot(
+            [s * half_L, s * half_L - s * g["box_length"]],
+            [-g["box_width"] / 2.0, -g["box_width"] / 2.0],
+            lc,
+            linewidth=linewidth,
+        )
+        ax.plot(
+            [s * half_L - s * g["box_length"], s * half_L - s * g["box_length"]],
+            [-g["box_width"] / 2.0, g["box_width"] / 2.0],
+            lc,
+            linewidth=linewidth,
+        )
 
         # Penalty area
-        ax.plot([s * half_L, s * half_L - s * g["area_length"]], [g["area_width"] / 2.0, g["area_width"] / 2.0], lc,
-                linewidth=linewidth)
-        ax.plot([s * half_L, s * half_L - s * g["area_length"]], [-g["area_width"] / 2.0, -g["area_width"] / 2.0], lc,
-                linewidth=linewidth)
-        ax.plot([s * half_L - s * g["area_length"], s * half_L - s * g["area_length"]],
-                [-g["area_width"] / 2.0, g["area_width"] / 2.0], lc, linewidth=linewidth)
+        ax.plot(
+            [s * half_L, s * half_L - s * g["area_length"]],
+            [g["area_width"] / 2.0, g["area_width"] / 2.0],
+            lc,
+            linewidth=linewidth,
+        )
+        ax.plot(
+            [s * half_L, s * half_L - s * g["area_length"]],
+            [-g["area_width"] / 2.0, -g["area_width"] / 2.0],
+            lc,
+            linewidth=linewidth,
+        )
+        ax.plot(
+            [s * half_L - s * g["area_length"], s * half_L - s * g["area_length"]],
+            [-g["area_width"] / 2.0, g["area_width"] / 2.0],
+            lc,
+            linewidth=linewidth,
+        )
 
         # Penalty spot
-        ax.scatter(s * half_L - s * g["penalty_spot"], 0.0, marker="o", facecolor=lc, linewidth=0, s=markersize)
+        ax.scatter(
+            s * half_L - s * g["penalty_spot"],
+            0.0,
+            marker="o",
+            facecolor=lc,
+            linewidth=0,
+            s=markersize,
+        )
 
         # Corner arcs
-        ax.plot(s * half_L - s * g["x_corner"], -half_W + g["y_corner"], lc, linewidth=linewidth)
-        ax.plot(s * half_L - s * g["x_corner"], half_W - g["y_corner"], lc, linewidth=linewidth)
+        ax.plot(
+            s * half_L - s * g["x_corner"],
+            -half_W + g["y_corner"],
+            lc,
+            linewidth=linewidth,
+        )
+        ax.plot(
+            s * half_L - s * g["x_corner"],
+            half_W - g["y_corner"],
+            lc,
+            linewidth=linewidth,
+        )
 
         # The D
         ax.plot(s * half_L - s * g["x_D"], g["y_D"], lc, linewidth=linewidth)
@@ -277,7 +327,10 @@ def plot_frame(
             vx = np.asarray(team[vx_cols], dtype=float)
             vy = np.asarray(team[vy_cols], dtype=float)
             ax.quiver(
-                x, y, vx, vy,
+                x,
+                y,
+                vx,
+                vy,
                 color=color,
                 scale_units="inches",
                 scale=10.0,
@@ -298,7 +351,9 @@ def plot_frame(
                     jersey = str(xc).split("_")[1]
                 except Exception:
                     jersey = str(xc)
-                ax.text(float(xv) + 0.5, float(yv) + 0.5, jersey, fontsize=10, color=color)
+                ax.text(
+                    float(xv) + 0.5, float(yv) + 0.5, jersey, fontsize=10, color=color
+                )
 
     # Ball
     bx = hometeam.get("ball_x", np.nan)
@@ -326,11 +381,15 @@ def save_match_clip(
 
     Generates a movie from Metrica tracking data, saving it in the 'fpath' directory with name 'fname'
     """
-    assert np.all(hometeam.index == awayteam.index), "Home and away team Dataframe indices must be the same"
+    assert np.all(
+        hometeam.index == awayteam.index
+    ), "Home and away team Dataframe indices must be the same"
     index = hometeam.index
 
     FFMpegWriter = animation.writers["ffmpeg"]
-    metadata = dict(title="Tracking Data", artist="Matplotlib", comment="Metrica tracking data clip")
+    metadata = dict(
+        title="Tracking Data", artist="Matplotlib", comment="Metrica tracking data clip"
+    )
     writer = FFMpegWriter(fps=frames_per_second, metadata=metadata)
 
     out_path = f"{fpath}/{fname}.mp4"
@@ -348,9 +407,13 @@ def save_match_clip(
     a_x_cols, a_y_cols = _player_xy_columns(a0)
 
     # Create artists we will update
-    home_pts, = ax.plot([], [], team_colors[0] + "o", markersize=Playermarkersize, alpha=PlayerAlpha)
-    away_pts, = ax.plot([], [], team_colors[1] + "o", markersize=Playermarkersize, alpha=PlayerAlpha)
-    ball_pt, = ax.plot([], [], "ko", markersize=6, alpha=1.0, linewidth=0)
+    (home_pts,) = ax.plot(
+        [], [], team_colors[0] + "o", markersize=Playermarkersize, alpha=PlayerAlpha
+    )
+    (away_pts,) = ax.plot(
+        [], [], team_colors[1] + "o", markersize=Playermarkersize, alpha=PlayerAlpha
+    )
+    (ball_pt,) = ax.plot([], [], "ko", markersize=6, alpha=1.0, linewidth=0)
     time_txt = ax.text(-2.5, field_dimen[1] / 2.0 + 1.0, "", fontsize=14)
 
     # Quivers (if enabled) are recreated each frame (updating quiver cleanly is annoying + brittle)
@@ -401,7 +464,10 @@ def save_match_clip(
                 avy = np.asarray(at[a_vy_cols], dtype=float)
 
                 home_quiv = ax.quiver(
-                    hx, hy, hvx, hvy,
+                    hx,
+                    hy,
+                    hvx,
+                    hvy,
                     color=team_colors[0],
                     scale_units="inches",
                     scale=10.0,
@@ -411,7 +477,10 @@ def save_match_clip(
                     alpha=PlayerAlpha,
                 )
                 away_quiv = ax.quiver(
-                    axx, ayy, avx, avy,
+                    axx,
+                    ayy,
+                    avx,
+                    avy,
                     color=team_colors[1],
                     scale_units="inches",
                     scale=10.0,
@@ -497,7 +566,13 @@ def plot_events(
                     xy=(ex, ey),
                     xytext=(sx, sy),
                     alpha=alpha,
-                    arrowprops=dict(alpha=alpha, width=0.5, headlength=4.0, headwidth=4.0, color=color),
+                    arrowprops=dict(
+                        alpha=alpha,
+                        width=0.5,
+                        headlength=4.0,
+                        headwidth=4.0,
+                        color=color,
+                    ),
                     annotation_clip=False,
                 )
 
@@ -549,7 +624,12 @@ def plot_pitchcontrol_for_event(
     cmap = "bwr" if pass_team == "Home" else "bwr_r"
     ax.imshow(
         np.flipud(PPCF),
-        extent=(-field_dimen[0] / 2.0, field_dimen[0] / 2.0, -field_dimen[1] / 2.0, field_dimen[1] / 2.0),
+        extent=(
+            -field_dimen[0] / 2.0,
+            field_dimen[0] / 2.0,
+            -field_dimen[1] / 2.0,
+            field_dimen[1] / 2.0,
+        ),
         interpolation="spline36",
         vmin=0.0,
         vmax=1.0,
@@ -604,11 +684,19 @@ def plot_EPV_for_event(
     if pass_team == "Home":
         cmap = "Reds"
         lcolor = "r"
-        EPV_use = np.fliplr(EPV) if mio.find_playing_direction(tracking_home, "Home") == -1 else EPV
+        EPV_use = (
+            np.fliplr(EPV)
+            if mio.find_playing_direction(tracking_home, "Home") == -1
+            else EPV
+        )
     else:
         cmap = "Blues"
         lcolor = "b"
-        EPV_use = np.fliplr(EPV) if mio.find_playing_direction(tracking_away, "Away") == -1 else EPV
+        EPV_use = (
+            np.fliplr(EPV)
+            if mio.find_playing_direction(tracking_away, "Away") == -1
+            else EPV
+        )
 
     EPVxPPCF = PPCF * EPV_use
 
@@ -621,7 +709,12 @@ def plot_EPV_for_event(
 
     ax.imshow(
         np.flipud(EPVxPPCF),
-        extent=(-field_dimen[0] / 2.0, field_dimen[0] / 2.0, -field_dimen[1] / 2.0, field_dimen[1] / 2.0),
+        extent=(
+            -field_dimen[0] / 2.0,
+            field_dimen[0] / 2.0,
+            -field_dimen[1] / 2.0,
+            field_dimen[1] / 2.0,
+        ),
         interpolation="spline36",
         vmin=0.0,
         vmax=vmax,
@@ -632,7 +725,12 @@ def plot_EPV_for_event(
     if contours:
         ax.contour(
             EPVxPPCF,
-            extent=(-field_dimen[0] / 2.0, field_dimen[0] / 2.0, -field_dimen[1] / 2.0, field_dimen[1] / 2.0),
+            extent=(
+                -field_dimen[0] / 2.0,
+                field_dimen[0] / 2.0,
+                -field_dimen[1] / 2.0,
+                field_dimen[1] / 2.0,
+            ),
             levels=np.array([0.75]) * np.max(EPVxPPCF),
             colors=lcolor,
             alpha=1.0,
@@ -651,7 +749,12 @@ def plot_EPV(EPV, field_dimen: FieldDimen = (106.0, 68), attack_direction: int =
     fig, ax = plot_pitch(field_color="white", field_dimen=field_dimen)
     ax.imshow(
         EPV_use,
-        extent=(-field_dimen[0] / 2.0, field_dimen[0] / 2.0, -field_dimen[1] / 2.0, field_dimen[1] / 2.0),
+        extent=(
+            -field_dimen[0] / 2.0,
+            field_dimen[0] / 2.0,
+            -field_dimen[1] / 2.0,
+            field_dimen[1] / 2.0,
+        ),
         vmin=0.0,
         vmax=0.6,
         cmap="Blues",

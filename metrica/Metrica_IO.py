@@ -34,7 +34,10 @@ FileSig = Tuple[str, int]  # (absolute_path_str, mtime_ns)
 # Public API (preserved names; caching is session-local and SAFE)
 # ---------------------------------------------------------------------
 
-def read_match_data(DATADIR: PathLike, gameid: int) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+
+def read_match_data(
+    DATADIR: PathLike, gameid: int
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Read all Metrica match data (tracking home/away, and event data)."""
     tracking_home = tracking_data(DATADIR, gameid, "Home")
     tracking_away = tracking_data(DATADIR, gameid, "Away")
@@ -50,7 +53,9 @@ def read_event_data(DATADIR: PathLike, game_id: int) -> pd.DataFrame:
     Returned DataFrame is always a *fresh copy* so downstream code can safely mutate it.
     """
     datadir = Path(DATADIR)
-    eventfile = datadir / f"Sample_Game_{game_id}" / f"Sample_Game_{game_id}_RawEventsData.csv"
+    eventfile = (
+        datadir / f"Sample_Game_{game_id}" / f"Sample_Game_{game_id}_RawEventsData.csv"
+    )
     sig = _file_sig(eventfile)
     df = _read_csv_cached(sig)
     return df.copy(deep=True)
@@ -59,7 +64,11 @@ def read_event_data(DATADIR: PathLike, game_id: int) -> pd.DataFrame:
 def tracking_data(DATADIR: PathLike, game_id: int, teamname: str) -> pd.DataFrame:
     """Read Metrica tracking data for `game_id` and return as a DataFrame."""
     datadir = Path(DATADIR)
-    teamfile = datadir / f"Sample_Game_{game_id}" / f"Sample_Game_{game_id}_RawTrackingData_{teamname}_Team.csv"
+    teamfile = (
+        datadir
+        / f"Sample_Game_{game_id}"
+        / f"Sample_Game_{game_id}_RawTrackingData_{teamname}_Team.csv"
+    )
 
     sig = _file_sig(teamfile)
     columns, teamnamefull = _tracking_columns_cached(sig, teamname)
@@ -115,11 +124,16 @@ def to_single_playing_direction(
 
     NOTE: This intentionally mutates inputs (matches original tutorial style).
     """
+
     def _coord_cols(df: pd.DataFrame) -> list[str]:
         cols: list[str] = []
         for c in df.columns:
             cl = str(c).lower()
-            if cl.endswith(("_x", "_y")) or cl.endswith((" x", " y")) or cl in ("x", "y"):
+            if (
+                cl.endswith(("_x", "_y"))
+                or cl.endswith((" x", " y"))
+                or cl in ("x", "y")
+            ):
                 cols.append(c)
         return cols
 
@@ -152,9 +166,15 @@ def find_playing_direction(team: pd.DataFrame, teamname: str) -> float:
 
 def find_goalkeeper(team: pd.DataFrame) -> str:
     """Identify goalkeeper jersey number as the player closest to goal at kickoff."""
-    x_cols = [c for c in team.columns if str(c).lower().endswith("_x") and str(c)[:4] in ("Home", "Away")]
+    x_cols = [
+        c
+        for c in team.columns
+        if str(c).lower().endswith("_x") and str(c)[:4] in ("Home", "Away")
+    ]
     if not x_cols:
-        raise ValueError("No player x-columns found (expected columns like 'Home_1_x').")
+        raise ValueError(
+            "No player x-columns found (expected columns like 'Home_1_x')."
+        )
 
     row0 = team.iloc[0][x_cols]
     abs_x = row0.astype(float).abs().fillna(-np.inf)
@@ -165,6 +185,7 @@ def find_goalkeeper(team: pd.DataFrame) -> str:
 # ---------------------------------------------------------------------
 # File-level caching helpers (SAFE within a Python session)
 # ---------------------------------------------------------------------
+
 
 def _file_sig(path: Path) -> FileSig:
     """Return a stable cache key that changes when the file changes."""
