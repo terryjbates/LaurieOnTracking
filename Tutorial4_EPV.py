@@ -14,14 +14,34 @@ GitHub repo: https://github.com/Friends-of-Tracking-Data-FoTD/LaurieOnTracking
 @author: Laurie Shaw (@EightyFivePoint)
 """
 
+import sys, os
+
+# set up initial path to data
+DATADIR = '/PATH/TO/WHERE/YOU/SAVED/THE/SAMPLE/DATA'
+DATADIR = r'C:\Users\lover\github\sample-data\data'
+
+sys.path.append(DATADIR)
+from importlib import reload  # Python 3.4+
+
+
+
 import Metrica_IO as mio
 import Metrica_Viz as mviz
 import Metrica_Velocities as mvel
 import Metrica_PitchControl as mpc
 import Metrica_EPV as mepv
 
+
+import metrica.Metrica_IO as mio
+import metrica.Metrica_Viz as mviz
+import metrica.Metrica_Velocities as mvel
+import metrica.Metrica_PitchControl as mpc
+import metrica.Metrica_EPV as mepv
+
+
+
 # set up initial path to data
-DATADIR = '/PATH/TO/WHERE/YOU/SAVED/THE/SAMPLE/DATA'
+# DATADIR = '/PATH/TO/WHERE/YOU/SAVED/THE/SAMPLE/DATA'
 
 game_id = 2 # let's look at sample match 2
 
@@ -57,7 +77,7 @@ GK_numbers = [mio.find_goalkeeper(tracking_home),mio.find_goalkeeper(tracking_aw
 
 """ *** GET EPV SURFACE **** """
 home_attack_direction = mio.find_playing_direction(tracking_home,'Home') # 1 if shooting left-right, else -1
-EPV = mepv.load_EPV_grid(DATADIR+'/EPV_grid.csv')
+EPV = mepv.load_EPV_grid('./EPV_grid.csv')
 # plot the EPV surface
 mviz.plot_EPV(EPV,field_dimen=(106.0,68),attack_direction=home_attack_direction)
 
@@ -89,17 +109,19 @@ home_pass_value_added = []
 for i,pass_ in home_passes.iterrows():
     EEPV_added, EPV_diff = mepv.calculate_epv_added( i, events, tracking_home, tracking_away, GK_numbers, EPV, params)
     home_pass_value_added.append( (i,EEPV_added,EPV_diff ) )
-    
+
 # away team value added
 away_pass_value_added = []
 for i,pass_ in away_passes.iterrows():
     EEPV_added, EPV_diff = mepv.calculate_epv_added( i, events, tracking_home, tracking_away, GK_numbers, EPV, params)
     away_pass_value_added.append( (i,EEPV_added,EPV_diff ) )
-    
 
-home_pass_value_added = sorted(home_pass_value_added, key = lambda x: x[1], reverse=True)  
-away_pass_value_added = sorted(away_pass_value_added, key = lambda x: x[1], reverse=True)  
-    
+
+home_pass_value_added = sorted(home_pass_value_added, key = lambda x: x[1], reverse=True)
+away_pass_value_added = sorted(away_pass_value_added, key = lambda x: x[1], reverse=True)
+
+
+
 print("Top 5 home team passes by expected EPV-added")
 print(home_pass_value_added[:5])
 print("Top 5 away team passes by expected EPV-added")
@@ -152,10 +174,3 @@ examples = [403,68,829]
 for event_number in examples:
     PPCF,xgrid,ygrid = mpc.generate_pitch_control_for_event(event_number, events, tracking_home, tracking_away, params, GK_numbers, field_dimen = (106.,68.,), n_grid_cells_x = 50, offsides=True)
     fig,ax = mviz.plot_EPV_for_event( event_number, events,  tracking_home, tracking_away, PPCF, EPV, annotate=True, autoscale=True, contours=True )
-     
-    
-    
-    
-    
-    
-    
