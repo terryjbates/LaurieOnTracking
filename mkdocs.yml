@@ -1,0 +1,7 @@
+site_name: metrica-fot
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Caching: caching.md
+  - Package: package.md
