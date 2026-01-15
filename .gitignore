@@ -218,4 +218,8 @@ __pycache__/
 dist/
 build/
 *.egg-info/
-src/metrica/__pycache__/
+src/*.egg-info/
+src/**.egg-info/
+**/__pycache__/
+*.pyc
+
